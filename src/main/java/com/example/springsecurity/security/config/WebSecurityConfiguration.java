@@ -2,6 +2,7 @@ package com.example.springsecurity.security.config;
 
 import com.example.springsecurity.security.jwt.JwtTokenFilter;
 import com.example.springsecurity.user.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -20,16 +21,23 @@ import javax.servlet.http.HttpServletResponse;
 public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final UserRepository userRepository;
-    public final JwtTokenFilter jwtTokenFilter;
 
-    public WebSecurityConfiguration(UserRepository userRepository, JwtTokenFilter jwtTokenFilter) {
+    @Autowired
+    private JwtTokenFilter jwtTokenFilter;
+
+    public WebSecurityConfiguration(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.jwtTokenFilter = jwtTokenFilter;
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(username -> userRepository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User " + username + " not found.")));
     }
 
     @Override
@@ -39,28 +47,20 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(username -> userRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User " + username + " not found."))
-        );
-    }
-
-    @Override
     protected void configure(HttpSecurity http) throws Exception {
+
         http.csrf().disable();
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
         http.exceptionHandling()
                 .authenticationEntryPoint(
-                        (request, response, ex) -> {
-                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, ex.getMessage());
-                        }
+                        (request, response, ex) ->
+                        {response.sendError(HttpServletResponse.SC_UNAUTHORIZED, ex.getMessage());}
                 );
 
         http.authorizeRequests()
                 .antMatchers("/auth/login").permitAll()
                 .anyRequest().authenticated();
-
 
         http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
     }

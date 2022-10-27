@@ -8,20 +8,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import javax.persistence.*;
 import java.util.Collection;
 
-@Setter
 @Getter
+@Setter
 @Entity
 @Table(name = "users")
 public class User implements UserDetails {
 
-    public User() { }
-
-    public User(String email, String password) {
-        this.email = email;
-        this.password = password;
-    }
-
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(nullable = false, length = 50, unique = true)
@@ -29,6 +23,13 @@ public class User implements UserDetails {
 
     @Column(nullable = false, length = 64)
     private String password;
+
+    public User() { }
+
+    public User(String email, String password) {
+        this.email = email;
+        this.password = password;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

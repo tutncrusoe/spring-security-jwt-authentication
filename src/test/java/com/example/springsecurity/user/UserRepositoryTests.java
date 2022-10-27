@@ -22,9 +22,9 @@ public class UserRepositoryTests {
     @Test
     public void testCreateUser() {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        String password = passwordEncoder.encode("tutncrusoe");
+        String password = passwordEncoder.encode("password");
 
-        User newUser = new User("tutncrusoe@email.com", password);
+        User newUser = new User("huy@email.com", password);
         User savedUser = repo.save(newUser);
 
         assertThat(savedUser).isNotNull();
